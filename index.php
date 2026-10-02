@@ -1,20 +1,115 @@
 <?php
-// ISU SmartEnroll Homepage
+
+session_start();
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATION CHECK
+|--------------------------------------------------------------------------
+*/
+
+if (
+    !isset($_SESSION["logged_in"]) ||
+    $_SESSION["logged_in"] !== true
+) {
+
+    header("Location: login.php");
+    exit;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| LOGOUT
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $_SERVER["REQUEST_METHOD"] === "POST" &&
+    isset($_POST["logout"])
+) {
+
+    $_SESSION = [];
+
+
+    if (ini_get("session.use_cookies")) {
+
+        $params = session_get_cookie_params();
+
+        setcookie(
+            session_name(),
+            "",
+            time() - 42000,
+            $params["path"],
+            $params["domain"],
+            $params["secure"],
+            $params["httponly"]
+        );
+
+    }
+
+
+    session_destroy();
+
+    header("Location: login.php");
+    exit;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| USER INFORMATION
+|--------------------------------------------------------------------------
+*/
+
+$full_name = $_SESSION["full_name"] ?? "Student";
+
+$applicant_id = $_SESSION["applicant_id"] ?? "";
+
+
+$display_name = htmlspecialchars(
+    $full_name,
+    ENT_QUOTES,
+    "UTF-8"
+);
+
+
+$display_applicant_id = htmlspecialchars(
+    $applicant_id,
+    ENT_QUOTES,
+    "UTF-8"
+);
+
 ?>
+
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>ISU SmartEnroll | Isabela State University - Cauayan Campus</title>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        ISU SmartEnroll | Cauayan Campus
+    </title>
+
+
+    <link
+        rel="icon"
+        href="assets/isu-logo.png"
+    >
+
 
     <style>
-
-        /* =====================================================
-           RESET
-        ===================================================== */
 
         * {
             margin: 0;
@@ -22,914 +117,1750 @@
             box-sizing: border-box;
         }
 
-       html,
-body {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden !important;
-}
 
-body {
-    min-height: 100vh;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #f7faf9;
-    color: #075d43;
-}
+        html {
+            scroll-behavior: smooth;
+        }
 
 
-        /* =====================================================
+        body {
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background:
+                #f5f9f7;
+
+            color:
+                #164f3a;
+
+            overflow-x:
+                hidden;
+
+        }
+
+
+        /* =========================================================
            HEADER
-        ===================================================== */
+        ========================================================= */
 
-        .header {
+        .top-header {
+
             width: 100%;
-            height: 185px;
+
             background: #ffffff;
-            border-top: 3px solid #087b4c;
-            overflow: hidden;
-        }
 
-        .header-inner {
-            width: 100%;
-            height: 100%;
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 0 45px;
+            border-top:
+                4px solid #0a7747;
 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
+            min-height:
+                165px;
 
+            display:
+                flex;
 
-        /* =====================================================
-           UNIVERSITY LOGOS
-        ===================================================== */
+            align-items:
+                center;
 
-        .side-logo {
-            width: 155px;
-            height: 155px;
-            object-fit: contain;
-            flex: 0 0 auto;
+            justify-content:
+                space-between;
+
+            padding:
+                25px 40px;
+
+            gap:
+                25px;
+
         }
 
 
-        /* =====================================================
+        /* =========================================================
+           UNIVERSITY BRAND
+        ========================================================= */
+
+        .university-brand {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                20px;
+
+            flex:
+                1;
+
+        }
+
+
+        .university-brand img {
+
+            width:
+                92px;
+
+            height:
+                92px;
+
+            object-fit:
+                contain;
+
+        }
+
+
+        .university-text h1 {
+
+            font-size:
+                30px;
+
+            line-height:
+                1.2;
+
+            color:
+                #075f3c;
+
+            font-weight:
+                800;
+
+        }
+
+
+        .university-text p {
+
+            margin-top:
+                8px;
+
+            font-size:
+                17px;
+
+            color:
+                #6c7d75;
+
+        }
+
+
+        /* =========================================================
            SMART ENROLL LOGO
-        ===================================================== */
+        ========================================================= */
 
-        .smart-logo-box {
-            width: 700px;
-            height: 180px;
+        .smart-enroll-brand {
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display:
+                flex;
 
-            position: relative;
-            overflow: hidden;
+            justify-content:
+                center;
 
-            flex: 1 1 auto;
-        }
+            align-items:
+                center;
 
-        .smart-logo {
-            display: block;
+            flex:
+                1;
 
-            width: 700px;
-            max-width: 100%;
-            height: auto;
-
-            transform: scale(0.75);
-            transform-origin: center center;
         }
 
 
-        /* =====================================================
+        .smart-enroll-brand img {
+
+            width:
+                270px;
+
+            max-width:
+                100%;
+
+            height:
+                auto;
+
+            object-fit:
+                contain;
+
+        }
+
+
+        /* =========================================================
+           CCSI(C) / COLLEGE BRAND
+        ========================================================= */
+
+        .college-brand {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                flex-end;
+
+            gap:
+                22px;
+
+            flex:
+                1;
+
+        }
+
+
+        .college-text {
+
+            text-align:
+                left;
+
+        }
+
+
+        .college-text h2 {
+
+            color:
+                #075f3c;
+
+            font-size:
+                23px;
+
+            line-height:
+                1.25;
+
+            font-weight:
+                800;
+
+        }
+
+
+        .college-text p {
+
+            color:
+                #6d7c76;
+
+            font-size:
+                15px;
+
+            line-height:
+                1.45;
+
+            margin-top:
+                6px;
+
+        }
+
+
+        .college-brand img {
+
+            width:
+                88px;
+
+            height:
+                88px;
+
+            object-fit:
+                contain;
+
+        }
+
+
+        /* =========================================================
            NAVBAR
-        ===================================================== */
+        ========================================================= */
 
         .navbar {
-            width: 100%;
-            height: 67px;
 
-            background: linear-gradient(
-                90deg,
-                #075d3e,
-                #087b4d
-            );
+            position:
+                sticky;
 
-            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+            top:
+                0;
 
-            overflow: hidden;
-        }
+            z-index:
+                1000;
 
-        .nav-inner {
-    width: 100%;
-    max-width: 1600px;
-    height: 67px;
+            width:
+                100%;
 
-    margin: 0 auto;
-    padding: 0 25px;
+            min-height:
+                79px;
 
-    display: flex;
-    align-items: center;
+            background:
+                #056344;
 
-    overflow: hidden;
-}
+            display:
+                flex;
 
-        .nav-links {
-            height: 67px;
+            align-items:
+                center;
 
-            display: flex;
-            align-items: center;
+            padding:
+                0 20px;
 
-            min-width: 0;
-        }
+            box-shadow:
+                0 3px 12px rgba(0,0,0,0.08);
 
-        .nav-links a {
-            height: 67px;
-
-            padding: 0 20px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 9px;
-
-            color: #ffffff;
-
-            font-size: 17px;
-            font-weight: 600;
-
-            white-space: nowrap;
-
-            transition: background 0.2s ease;
-        }
-
-        .nav-links a:hover {
-            background: rgba(255,255,255,0.08);
-        }
-
-        .nav-links a.active {
-            background: #35a15e;
         }
 
 
-        /* =====================================================
-           NAV ICON
-        ===================================================== */
+        .nav-left {
+
+            display:
+                flex;
+
+            align-items:
+                stretch;
+
+            height:
+                79px;
+
+        }
+
+
+        .nav-link {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                12px;
+
+            padding:
+                0 25px;
+
+            color:
+                #ffffff;
+
+            text-decoration:
+                none;
+
+            font-size:
+                17px;
+
+            font-weight:
+                700;
+
+            position:
+                relative;
+
+            transition:
+                0.2s;
+
+        }
+
+
+        .nav-link:hover {
+
+            background:
+                rgba(255,255,255,0.08);
+
+        }
+
+
+        .nav-link.active {
+
+            background:
+                rgba(255,255,255,0.08);
+
+        }
+
+
+        .nav-link.active::after {
+
+            content:
+                "";
+
+            position:
+                absolute;
+
+            left:
+                0;
+
+            right:
+                0;
+
+            bottom:
+                0;
+
+            height:
+                4px;
+
+            background:
+                #72df36;
+
+        }
+
 
         .nav-icon {
-            width: 21px;
-            height: 21px;
 
-            stroke: currentColor;
-            fill: none;
+            font-size:
+                22px;
 
-            stroke-width: 2;
+            line-height:
+                1;
 
-            stroke-linecap: round;
-            stroke-linejoin: round;
-
-            flex-shrink: 0;
         }
 
 
-        /* =====================================================
-           ACCOUNT BUTTONS
-        ===================================================== */
+        /* =========================================================
+           ACCOUNT AREA
+        ========================================================= */
 
-        .account-links {
-            margin-left: auto;
+        .nav-account {
 
-            display: flex;
-            align-items: center;
+            margin-left:
+                auto;
 
-            gap: 12px;
+            display:
+                flex;
 
-            flex-shrink: 0;
-        }
+            align-items:
+                center;
 
-        .login-btn,
-        .register-btn {
-            height: 46px;
+            gap:
+                12px;
 
-            padding: 0 20px;
-
-            border-radius: 9px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            gap: 8px;
-
-            color: #ffffff;
-
-            font-size: 16px;
-            font-weight: 600;
-
-            white-space: nowrap;
-        }
-
-        .login-btn {
-            border: 1px solid #ffffff;
-            background: transparent;
-        }
-
-        .login-btn:hover {
-            background: rgba(255,255,255,0.12);
-        }
-
-        .register-btn {
-            background: #68c638;
-        }
-
-        .register-btn:hover {
-            background: #55ae2b;
         }
 
 
-        /* =====================================================
+        .account-info {
+
+            color:
+                #ffffff;
+
+            text-align:
+                right;
+
+            line-height:
+                1.25;
+
+            margin-right:
+                4px;
+
+        }
+
+
+        .account-name {
+
+            font-size:
+                14px;
+
+            font-weight:
+                800;
+
+            max-width:
+                210px;
+
+            white-space:
+                nowrap;
+
+            overflow:
+                hidden;
+
+            text-overflow:
+                ellipsis;
+
+        }
+
+
+        .account-id {
+
+            font-size:
+                11px;
+
+            color:
+                rgba(255,255,255,0.72);
+
+            margin-top:
+                3px;
+
+        }
+
+
+        /* =========================================================
+           RED LOGOUT
+        ========================================================= */
+
+        .logout-button {
+
+            height:
+                50px;
+
+            padding:
+                0 22px;
+
+            border:
+                1px solid #dc3545;
+
+            border-radius:
+                11px;
+
+            background:
+                #dc3545;
+
+            color:
+                #ffffff;
+
+            font-size:
+                15px;
+
+            font-weight:
+                700;
+
+            cursor:
+                pointer;
+
+            transition:
+                0.2s;
+
+        }
+
+
+        .logout-button:hover {
+
+            background:
+                #b02a37;
+
+            border-color:
+                #b02a37;
+
+            transform:
+                translateY(-1px);
+
+        }
+
+
+        .logout-button:active {
+
+            transform:
+                translateY(0);
+
+        }
+
+
+        /* =========================================================
            HERO
-        ===================================================== */
+        ========================================================= */
 
         .hero {
-            position: relative;
 
-            width: 100%;
-            height: 425px;
+            min-height:
+                610px;
 
-            overflow: hidden;
+            position:
+                relative;
 
-            background: #eef8f5;
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            background:
+
+                linear-gradient(
+                    90deg,
+                    rgba(250,255,253,0.99) 0%,
+                    rgba(248,253,251,0.96) 37%,
+                    rgba(248,253,251,0.76) 52%,
+                    rgba(248,253,251,0.10) 75%,
+                    rgba(248,253,251,0) 100%
+                ),
+
+                url("assets/background.jpg");
+
+            background-size:
+                cover;
+
+            background-position:
+                center;
+
+            background-repeat:
+                no-repeat;
+
         }
 
-
-        /* =====================================================
-           CAMPUS IMAGE
-        ===================================================== */
-
-        .hero-image {
-            position: absolute;
-
-            top: 0;
-            right: 0;
-
-            width: 55%;
-            height: 100%;
-
-            background-image: url("assets/background.jpg");
-
-            background-size: cover;
-            background-position: center center;
-
-            z-index: 1;
-        }
-
-
-        /* =====================================================
-           LIGHT LEFT PANEL
-        ===================================================== */
-
-        .hero-left {
-            position: absolute;
-
-            top: 0;
-            left: 0;
-
-            width: 60%;
-            height: 100%;
-
-            background: linear-gradient(
-                105deg,
-                #f7fcfa 0%,
-                #eef8f5 72%,
-                #e2f2eb 100%
-            );
-
-            clip-path: polygon(
-                0 0,
-                91% 0,
-                73% 100%,
-                0 100%
-            );
-
-            z-index: 2;
-        }
-
-
-        /* =====================================================
-           DIAGONAL GREEN DESIGN
-        ===================================================== */
-
-        .shape-one {
-            position: absolute;
-
-            top: -60px;
-            bottom: -60px;
-
-            left: 51%;
-
-            width: 78px;
-
-            background: rgba(7,126,76,0.88);
-
-            transform: skewX(-27deg);
-
-            z-index: 4;
-        }
-
-        .shape-two {
-            position: absolute;
-
-            top: -60px;
-            bottom: -60px;
-
-            left: 48.3%;
-
-            width: 45px;
-
-            background: rgba(103,195,55,0.85);
-
-            transform: skewX(-27deg);
-
-            z-index: 4;
-        }
-
-        .shape-three {
-            position: absolute;
-
-            top: -60px;
-            bottom: -60px;
-
-            left: 53.6%;
-
-            width: 18px;
-
-            background: rgba(255,255,255,0.92);
-
-            transform: skewX(-27deg);
-
-            z-index: 5;
-        }
-
-
-        /* =====================================================
-           HERO CONTENT
-        ===================================================== */
 
         .hero-content {
-    position: relative;
-    z-index: 10;
 
-    width: 100%;
-    max-width: 1600px;
-    height: 100%;
+            width:
+                100%;
 
-    margin: 0 auto;
-    padding: 72px 65px;
+            max-width:
+                1500px;
 
-    overflow: hidden;
-}
-    
+            margin:
+                0 auto;
 
-        .hero-content-inner {
-            width: 670px;
-            max-width: 48%;
+            padding:
+                70px 30px;
+
         }
 
-        .hero-title {
-            color: #075d47;
 
-            font-size: 52px;
-            line-height: 1.08;
+        .campus-badge {
 
-            font-weight: 750;
+            display:
+                inline-flex;
 
-            margin-bottom: 22px;
+            align-items:
+                center;
+
+            gap:
+                10px;
+
+            padding:
+                12px 18px;
+
+            border-radius:
+                30px;
+
+            background:
+                #e3f6ed;
+
+            border:
+                1px solid #ccebdc;
+
+            color:
+                #087547;
+
+            font-size:
+                14px;
+
+            font-weight:
+                800;
+
+            margin-bottom:
+                28px;
+
         }
+
+
+        .campus-badge span {
+
+            width:
+                9px;
+
+            height:
+                9px;
+
+            border-radius:
+                50%;
+
+            background:
+                #67d437;
+
+        }
+
+
+        .hero h1 {
+
+            max-width:
+                850px;
+
+            font-size:
+                clamp(48px, 5vw, 72px);
+
+            line-height:
+                1.08;
+
+            letter-spacing:
+                -2px;
+
+            color:
+                #056343;
+
+            font-weight:
+                850;
+
+        }
+
+
+        .hero h1 span {
+
+            color:
+                #3da634;
+
+        }
+
 
         .hero-description {
-            color: #527b8d;
 
-            font-size: 20px;
-            line-height: 1.5;
+            max-width:
+                800px;
 
-            max-width: 650px;
+            margin-top:
+                25px;
 
-            margin-bottom: 27px;
+            color:
+                #52746a;
+
+            font-size:
+                20px;
+
+            line-height:
+                1.8;
+
         }
 
 
-        /* =====================================================
-           GET STARTED
-        ===================================================== */
+        .hero-actions {
 
-        .get-started {
-            display: inline-flex;
+            display:
+                flex;
 
-            align-items: center;
-            justify-content: center;
+            gap:
+                16px;
 
-            gap: 12px;
+            margin-top:
+                36px;
 
-            height: 56px;
-            min-width: 230px;
+            flex-wrap:
+                wrap;
 
-            padding: 0 30px;
-
-            border-radius: 28px;
-
-            background: #078548;
-
-            color: #ffffff;
-
-            font-size: 20px;
-            font-weight: 650;
-
-            box-shadow: 0 5px 12px rgba(0,0,0,0.10);
-
-            transition: 0.2s ease;
-        }
-
-        .get-started:hover {
-            background: #056d3c;
-            transform: translateY(-2px);
-        }
-
-        .start-icon {
-            width: 23px;
-            height: 23px;
-
-            stroke: currentColor;
-            fill: none;
-
-            stroke-width: 2;
-
-            stroke-linecap: round;
-            stroke-linejoin: round;
         }
 
 
-        /* =====================================================
-           CARDS
-        ===================================================== */
+        .primary-button,
+        .secondary-button {
 
-        .services {
-            width: 100%;
+            min-width:
+                193px;
 
-            padding: 34px 35px 50px;
+            height:
+                67px;
 
-            background: #f8fbfa;
-        }
+            border-radius:
+                12px;
 
-        .cards {
-            width: 100%;
-            max-width: 1375px;
+            display:
+                inline-flex;
 
-            margin: 0 auto;
+            align-items:
+                center;
 
-            display: grid;
+            justify-content:
+                center;
 
-            grid-template-columns: repeat(4, 1fr);
+            padding:
+                0 28px;
 
-            gap: 24px;
-        }
+            font-size:
+                16px;
 
-        .card {
-            min-height: 252px;
+            font-weight:
+                800;
 
-            padding: 18px 30px 20px;
+            text-decoration:
+                none;
 
-            background: #ffffff;
+            transition:
+                0.2s;
 
-            border: 1px solid #e5eeea;
-
-            border-radius: 13px;
-
-            box-shadow: 0 3px 15px rgba(0,0,0,0.06);
-
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-
-            text-align: center;
-
-            transition: 0.25s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-
-            box-shadow: 0 8px 22px rgba(0,0,0,0.10);
         }
 
 
-        /* =====================================================
-           CARD ICON
-        ===================================================== */
+        .primary-button {
 
-        .card-icon {
-            width: 76px;
-            height: 76px;
+            background:
+                #07834b;
 
-            margin-bottom: 12px;
+            color:
+                #ffffff;
 
-            border-radius: 50%;
+            box-shadow:
+                0 12px 25px rgba(0,131,75,0.18);
 
-            background: #dff1e4;
-
-            color: #087449;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card-icon svg {
-            width: 38px;
-            height: 38px;
-
-            stroke: currentColor;
-            fill: none;
-
-            stroke-width: 2;
-
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .card h3 {
-            color: #086443;
-
-            font-size: 20px;
-
-            margin-bottom: 11px;
-        }
-
-        .card p {
-            color: #607f91;
-
-            font-size: 16px;
-            line-height: 1.45;
-
-            max-width: 270px;
-        }
-
-        .card-arrow {
-            margin-top: auto;
-            padding-top: 12px;
-
-            color: #087449;
-
-            font-size: 31px;
         }
 
 
-        /* =====================================================
-           1400px AND BELOW
-        ===================================================== */
+        .primary-button:hover {
 
-        @media (max-width: 1400px) {
+            background:
+                #056c3d;
 
-            .header-inner {
-                padding: 0 30px;
-            }
+            transform:
+                translateY(-2px);
 
-            .side-logo {
-                width: 135px;
-                height: 135px;
-            }
-
-            .smart-logo-box {
-                max-width: 650px;
-            }
-
-            .smart-logo {
-                width: 650px;
-            }
-
-            .nav-links a {
-                padding: 0 15px;
-                font-size: 16px;
-            }
-
-            .hero-content {
-                padding-left: 50px;
-                padding-right: 50px;
-            }
-
-            .hero-title {
-                font-size: 48px;
-            }
         }
 
 
-        /* =====================================================
-           1150px AND BELOW
-        ===================================================== */
+        .secondary-button {
 
-        @media (max-width: 1150px) {
+            background:
+                #ffffff;
 
-            .header {
-                height: 160px;
-            }
+            color:
+                #075f3c;
 
-            .header-inner {
-                padding: 0 20px;
-                gap: 10px;
-            }
+            border:
+                1px solid #d2dfd9;
 
-            .side-logo {
-                width: 110px;
-                height: 110px;
-            }
-
-            .smart-logo-box {
-                height: 155px;
-                max-width: 600px;
-            }
-
-            .smart-logo {
-                width: 600px;
-                transform: scale(0.72);
-            }
-
-            .nav-links a {
-                padding: 0 11px;
-                font-size: 14px;
-                gap: 6px;
-            }
-
-            .account-links {
-                gap: 6px;
-            }
-
-            .login-btn,
-            .register-btn {
-                padding: 0 13px;
-                font-size: 14px;
-            }
-
-            .hero-content {
-                padding: 65px 40px;
-            }
-
-            .hero-content-inner {
-                max-width: 52%;
-            }
-
-            .hero-title {
-                font-size: 42px;
-            }
-
-            .hero-description {
-                font-size: 18px;
-            }
-
-            .cards {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
 
 
-        /* =====================================================
-           900px AND BELOW
-        ===================================================== */
+        .secondary-button:hover {
+
+            border-color:
+                #07834b;
+
+            transform:
+                translateY(-2px);
+
+        }
+
+
+        /* =========================================================
+           QUICK INFORMATION
+        ========================================================= */
+
+        .quick-section {
+
+            background:
+                #f5f9f7;
+
+            padding:
+                70px 30px;
+
+        }
+
+
+        .quick-grid {
+
+            max-width:
+                1500px;
+
+            margin:
+                0 auto;
+
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap:
+                24px;
+
+        }
+
+
+        .info-card {
+
+            background:
+                #ffffff;
+
+            border:
+                1px solid #e0ebe5;
+
+            border-radius:
+                18px;
+
+            padding:
+                32px 29px;
+
+            min-height:
+                260px;
+
+            box-shadow:
+                0 10px 25px rgba(0,0,0,0.04);
+
+            transition:
+                0.2s;
+
+        }
+
+
+        .info-card:hover {
+
+            transform:
+                translateY(-4px);
+
+            box-shadow:
+                0 15px 30px rgba(0,0,0,0.07);
+
+        }
+
+
+        .info-icon {
+
+            width:
+                58px;
+
+            height:
+                58px;
+
+            border-radius:
+                15px;
+
+            background:
+                #e7f6ee;
+
+            color:
+                #087547;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            font-size:
+                25px;
+
+            margin-bottom:
+                28px;
+
+        }
+
+
+        .info-card h3 {
+
+            color:
+                #075f3c;
+
+            font-size:
+                21px;
+
+            margin-bottom:
+                14px;
+
+        }
+
+
+        .info-card p {
+
+            color:
+                #6c8078;
+
+            font-size:
+                16px;
+
+            line-height:
+                1.7;
+
+            margin-bottom:
+                26px;
+
+        }
+
+
+        .info-link {
+
+            color:
+                #087547;
+
+            text-decoration:
+                none;
+
+            font-size:
+                15px;
+
+            font-weight:
+                800;
+
+        }
+
+
+        .info-link:hover {
+
+            text-decoration:
+                underline;
+
+        }
+
+
+        /* =========================================================
+           CTA
+        ========================================================= */
+
+        .cta {
+
+            background:
+                #056344;
+
+            color:
+                #ffffff;
+
+            padding:
+                75px 30px;
+
+        }
+
+
+        .cta-inner {
+
+            max-width:
+                1500px;
+
+            margin:
+                0 auto;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                40px;
+
+        }
+
+
+        .cta h2 {
+
+            font-size:
+                38px;
+
+            line-height:
+                1.25;
+
+            margin-bottom:
+                16px;
+
+            color:
+                #ffffff;
+
+        }
+
+
+        .cta p {
+
+            color:
+                rgba(255,255,255,0.78);
+
+            font-size:
+                17px;
+
+            line-height:
+                1.6;
+
+        }
+
+
+        .cta-actions {
+
+            display:
+                flex;
+
+            gap:
+                13px;
+
+            flex-shrink:
+                0;
+
+            align-items:
+                center;
+
+        }
+
+
+        .cta-button {
+
+            min-width:
+                170px;
+
+            height:
+                60px;
+
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            padding:
+                0 24px;
+
+            border-radius:
+                11px;
+
+            text-decoration:
+                none;
+
+            font-weight:
+                800;
+
+            font-size:
+                15px;
+
+            transition:
+                0.2s;
+
+        }
+
+
+        .cta-primary {
+
+            background:
+                #ffffff;
+
+            color:
+                #056344;
+
+        }
+
+
+        .cta-primary:hover {
+
+            transform:
+                translateY(-2px);
+
+        }
+
+
+        .cta-logout {
+
+            border:
+                1px solid #dc3545;
+
+            background:
+                #dc3545;
+
+            color:
+                #ffffff;
+
+            cursor:
+                pointer;
+
+        }
+
+
+        .cta-logout:hover {
+
+            background:
+                #b02a37;
+
+            border-color:
+                #b02a37;
+
+            transform:
+                translateY(-2px);
+
+        }
+
+
+        /* =========================================================
+           FOOTER
+        ========================================================= */
+
+        .footer {
+
+            background:
+                #034a32;
+
+            color:
+                #ffffff;
+
+            padding:
+                36px 30px;
+
+        }
+
+
+        .footer-inner {
+
+            max-width:
+                1500px;
+
+            margin:
+                0 auto;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                30px;
+
+        }
+
+
+        .footer-brand {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                15px;
+
+        }
+
+
+        .footer-brand img {
+
+            width:
+                54px;
+
+            height:
+                54px;
+
+            object-fit:
+                contain;
+
+        }
+
+
+        .footer-brand strong {
+
+            display:
+                block;
+
+            font-size:
+                15px;
+
+            margin-bottom:
+                4px;
+
+        }
+
+
+        .footer-brand span {
+
+            color:
+                rgba(255,255,255,0.62);
+
+            font-size:
+                13px;
+
+        }
+
+
+        .footer-copy {
+
+            color:
+                rgba(255,255,255,0.58);
+
+            font-size:
+                13px;
+
+        }
+
+
+        /* =========================================================
+           RESPONSIVE - 1200
+        ========================================================= */
+
+        @media (max-width: 1200px) {
+
+            .top-header {
+
+                padding:
+                    22px 25px;
+
+            }
+
+
+            .university-text h1 {
+
+                font-size:
+                    24px;
+
+            }
+
+
+            .university-text p {
+
+                font-size:
+                    15px;
+
+            }
+
+
+            .college-text h2 {
+
+                font-size:
+                    18px;
+
+            }
+
+
+            .college-text p {
+
+                font-size:
+                    13px;
+
+            }
+
+
+            .nav-link {
+
+                padding:
+                    0 17px;
+
+                font-size:
+                    15px;
+
+            }
+
+
+            .quick-grid {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+        }
+
+
+        /* =========================================================
+           RESPONSIVE - 900
+        ========================================================= */
 
         @media (max-width: 900px) {
 
-            .header {
-                height: 130px;
+            .top-header {
+
+                min-height:
+                    auto;
+
+                flex-wrap:
+                    wrap;
+
+                justify-content:
+                    center;
+
             }
 
-            .header-inner {
-                padding: 0 10px;
+
+            .university-brand,
+            .smart-enroll-brand,
+            .college-brand {
+
+                flex:
+                    none;
+
             }
 
-            .side-logo {
-                width: 80px;
-                height: 80px;
+
+            .university-brand {
+
+                justify-content:
+                    center;
+
             }
 
-            .smart-logo-box {
-                width: calc(100% - 180px);
-                height: 125px;
+
+            .college-brand {
+
+                justify-content:
+                    center;
+
             }
 
-            .smart-logo {
-                width: 100%;
-                transform: scale(0.82);
+
+            .nav-left {
+
+                overflow-x:
+                    auto;
+
+                width:
+                    100%;
+
             }
 
-            .navbar {
-                height: auto;
+
+            .nav-account {
+
+                position:
+                    absolute;
+
+                right:
+                    15px;
+
             }
 
-            .nav-inner {
-                height: 60px;
-                padding: 0;
-                overflow-x: auto;
-                overflow-y: hidden;
+
+            .account-info {
+
+                display:
+                    none;
+
             }
 
-            .nav-links {
-                height: 60px;
-                flex-shrink: 0;
-            }
-
-            .nav-links a {
-                height: 60px;
-                padding: 0 14px;
-            }
-
-            .account-links {
-                flex-shrink: 0;
-                padding: 0 8px;
-            }
 
             .hero {
-                height: 500px;
+
+                background:
+
+                    linear-gradient(
+                        rgba(248,253,251,0.92),
+                        rgba(248,253,251,0.92)
+                    ),
+
+                    url("assets/background.jpg")
+                    center / cover;
+
             }
 
-            .hero-image {
-                width: 100%;
-                opacity: 0.18;
+
+            .cta-inner {
+
+                flex-direction:
+                    column;
+
+                align-items:
+                    flex-start;
+
             }
 
-            .hero-left {
-                width: 100%;
-                clip-path: none;
-
-                background: rgba(244,251,249,0.93);
-            }
-
-            .shape-one,
-            .shape-two,
-            .shape-three {
-                display: none;
-            }
-
-            .hero-content {
-                padding: 55px 30px;
-            }
-
-            .hero-content-inner {
-                max-width: 100%;
-                width: 100%;
-            }
-
-            .hero-title {
-                font-size: 40px;
-            }
-
-            .hero-description {
-                font-size: 18px;
-            }
         }
 
 
-        /* =====================================================
-           650px AND BELOW
-        ===================================================== */
+        /* =========================================================
+           RESPONSIVE - 650
+        ========================================================= */
 
         @media (max-width: 650px) {
 
-            .header {
-                height: 105px;
+            .top-header {
+
+                padding:
+                    18px 15px;
+
+                gap:
+                    15px;
+
             }
 
-            .header-inner {
-                padding: 0 7px;
-                gap: 3px;
+
+            .university-brand {
+
+                width:
+                    100%;
+
+                justify-content:
+                    center;
+
             }
 
-            .side-logo {
-                width: 60px;
-                height: 60px;
+
+            .university-brand img {
+
+                width:
+                    65px;
+
+                height:
+                    65px;
+
             }
 
-            .smart-logo-box {
-                width: calc(100% - 126px);
-                height: 100px;
+
+            .university-text h1 {
+
+                font-size:
+                    20px;
+
             }
 
-            .smart-logo {
-                width: 100%;
-                transform: scale(0.9);
+
+            .university-text p {
+
+                font-size:
+                    13px;
+
             }
 
-            .nav-inner {
-                height: 56px;
+
+            .smart-enroll-brand {
+
+                width:
+                    100%;
+
             }
 
-            .nav-links {
-                height: 56px;
+
+            .smart-enroll-brand img {
+
+                width:
+                    220px;
+
             }
 
-            .nav-links a {
-                height: 56px;
-                padding: 0 12px;
-                font-size: 13px;
+
+            /*
+            |--------------------------------------------------------------------------
+            | KEEP CCSI(C) LOGO VISIBLE
+            |--------------------------------------------------------------------------
+            */
+
+            .college-brand {
+
+                display:
+                    flex;
+
+                width:
+                    100%;
+
+                justify-content:
+                    center;
+
+                align-items:
+                    center;
+
+                gap:
+                    12px;
+
             }
 
-            .account-links {
-                height: 56px;
+
+            .college-text {
+
+                text-align:
+                    right;
+
             }
 
-            .login-btn,
-            .register-btn {
-                height: 40px;
-                padding: 0 11px;
-                font-size: 13px;
+
+            .college-text h2 {
+
+                font-size:
+                    15px;
+
             }
 
-            .hero {
-                height: 540px;
+
+            .college-text p {
+
+                font-size:
+                    11px;
+
             }
 
-            .hero-content {
-                padding: 50px 25px;
+
+            .college-brand img {
+
+                width:
+                    60px;
+
+                height:
+                    60px;
+
             }
 
-            .hero-title {
-                font-size: 35px;
+
+            .navbar {
+
+                padding:
+                    0 8px;
+
             }
 
-            .hero-description {
-                font-size: 17px;
+
+            .nav-left {
+
+                height:
+                    67px;
+
             }
 
-            .get-started {
-                min-width: 210px;
-                height: 52px;
-                font-size: 18px;
+
+            .navbar {
+
+                min-height:
+                    67px;
+
             }
 
-            .services {
-                padding: 25px 18px 40px;
+
+            .nav-link {
+
+                height:
+                    67px;
+
+                padding:
+                    0 14px;
+
+                font-size:
+                    13px;
+
+                gap:
+                    7px;
+
+                white-space:
+                    nowrap;
+
             }
 
-            .cards {
-                grid-template-columns: 1fr;
-                gap: 18px;
-            }
-        }
-
-
-        /* =====================================================
-           450px AND BELOW
-        ===================================================== */
-
-        @media (max-width: 450px) {
-
-            .header {
-                height: 90px;
-            }
-
-            .side-logo {
-                width: 50px;
-                height: 50px;
-            }
-
-            .smart-logo-box {
-                width: calc(100% - 106px);
-                height: 85px;
-            }
-
-            .smart-logo {
-                transform: scale(0.95);
-            }
-
-            .nav-links a {
-                padding: 0 10px;
-                font-size: 12px;
-            }
 
             .nav-icon {
-                width: 17px;
-                height: 17px;
+
+                font-size:
+                    18px;
+
             }
+
+
+            .logout-button {
+
+                height:
+                    43px;
+
+                padding:
+                    0 13px;
+
+                font-size:
+                    13px;
+
+            }
+
 
             .hero {
-                height: 500px;
+
+                min-height:
+                    570px;
+
             }
+
 
             .hero-content {
-                padding: 45px 20px;
+
+                padding:
+                    55px 22px;
+
             }
 
-            .hero-title {
-                font-size: 31px;
+
+            .campus-badge {
+
+                font-size:
+                    12px;
+
+                padding:
+                    10px 14px;
+
             }
+
+
+            .hero h1 {
+
+                font-size:
+                    44px;
+
+                letter-spacing:
+                    -1px;
+
+            }
+
 
             .hero-description {
-                font-size: 16px;
+
+                font-size:
+                    16px;
+
+                line-height:
+                    1.65;
+
             }
+
+
+            .hero-actions {
+
+                flex-direction:
+                    column;
+
+            }
+
+
+            .primary-button,
+            .secondary-button {
+
+                width:
+                    100%;
+
+            }
+
+
+            .quick-section {
+
+                padding:
+                    45px 18px;
+
+            }
+
+
+            .quick-grid {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .cta {
+
+                padding:
+                    55px 22px;
+
+            }
+
+
+            .cta h2 {
+
+                font-size:
+                    29px;
+
+            }
+
+
+            .cta-actions {
+
+                width:
+                    100%;
+
+                flex-direction:
+                    column;
+
+                align-items:
+                    stretch;
+
+            }
+
+
+            .cta-actions form {
+
+                width:
+                    100%;
+
+            }
+
+
+            .cta-button {
+
+                width:
+                    100%;
+
+            }
+
+
+            .footer-inner {
+
+                flex-direction:
+                    column;
+
+                align-items:
+                    flex-start;
+
+            }
+
         }
 
     </style>
@@ -940,346 +1871,347 @@ body {
 <body>
 
 
-<!-- =====================================================
+<!-- ============================================================
      HEADER
-===================================================== -->
+============================================================= -->
 
-<header class="header">
+<header class="top-header">
 
-    <div class="header-inner">
 
-        <!-- ISU LOGO -->
+    <!-- UNIVERSITY -->
+
+    <div class="university-brand">
+
 
         <img
             src="assets/isu-logo.png"
             alt="Isabela State University"
-            class="side-logo"
         >
 
 
-        <!-- SMART ENROLL LOGO -->
+        <div class="university-text">
 
-        <div class="smart-logo-box">
+            <h1>
+                Isabela State University
+            </h1>
 
-            <img
-                src="assets/smart-enroll-logo.png?v=7"
-                alt="ISU SmartEnroll"
-                class="smart-logo"
-            >
+            <p>
+                Cauayan Campus
+            </p>
 
         </div>
 
 
-        <!-- CCSICT LOGO -->
+    </div>
+
+
+    <!-- SMART ENROLL -->
+
+    <div class="smart-enroll-brand">
 
         <img
-            src="assets/ccsict-logo.png"
-            alt="CCSICT"
-            class="side-logo"
+            src="assets/smart-enroll-logo.png?v=8"
+            alt="ISU SmartEnroll"
         >
 
     </div>
+
+
+    <!-- CCSI(C) -->
+
+    <div class="college-brand">
+
+
+        <div class="college-text">
+
+            <h2>
+                College of Computing Studies
+            </h2>
+
+            <p>
+                Information and Communication Technology<br>
+                Isabela State University
+            </p>
+
+        </div>
+
+
+        <img
+            src="assets/ccsict-logo.png"
+            alt="College of Computing Studies"
+        >
+
+
+    </div>
+
 
 </header>
 
 
 
-<!-- =====================================================
-     NAVBAR
-===================================================== -->
+<!-- ============================================================
+     NAVIGATION
+============================================================= -->
 
 <nav class="navbar">
 
-    <div class="nav-inner">
 
+    <div class="nav-left">
 
-        <div class="nav-links">
 
+        <a
+            href="index.php"
+            class="nav-link active"
+        >
 
-            <!-- HOME -->
+            <span class="nav-icon">
+                ⌂
+            </span>
 
-            <a href="index.php" class="active">
+            Home
 
-                <svg class="nav-icon" viewBox="0 0 24 24">
+        </a>
 
-                    <path d="M3 10.5L12 3l9 7.5"></path>
 
-                    <path d="M5 9.5V21h14V9.5"></path>
+        <a
+            href="enrollment.php"
+            class="nav-link"
+        >
 
-                    <path d="M9 21v-6h6v6"></path>
+            <span class="nav-icon">
+                □
+            </span>
 
-                </svg>
+            Enrollment Guide
 
-                Home
+        </a>
 
-            </a>
 
+        <a
+            href="requirements.php"
+            class="nav-link"
+        >
 
-            <!-- ENROLLMENT GUIDE -->
+            <span class="nav-icon">
+                ▤
+            </span>
 
-            <a href="enrollment-guide.php">
+            Requirements
 
-                <svg class="nav-icon" viewBox="0 0 24 24">
+        </a>
 
-                    <path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H7.5A3.5 3.5 0 0 0 4 22z"></path>
 
-                    <path d="M4 5.5v16"></path>
+        <a
+            href="procedures.php"
+            class="nav-link"
+        >
 
-                </svg>
+            <span class="nav-icon">
+                ⚙
+            </span>
 
-                Enrollment Guide
+            Procedures
 
-            </a>
+        </a>
 
 
-            <!-- REQUIREMENTS -->
+        <a
+            href="announcements.php"
+            class="nav-link"
+        >
 
-            <a href="requirements.php">
+            <span class="nav-icon">
+                ◁
+            </span>
 
-                <svg class="nav-icon" viewBox="0 0 24 24">
+            Announcements
 
-                    <path d="M6 3h9l4 4v14H6z"></path>
+        </a>
 
-                    <path d="M14 3v5h5"></path>
-
-                    <path d="M9 13h6"></path>
-
-                    <path d="M9 17h6"></path>
-
-                </svg>
-
-                Requirements
-
-            </a>
-
-
-            <!-- PROCEDURES -->
-
-            <a href="procedures.php">
-
-                <svg class="nav-icon" viewBox="0 0 24 24">
-
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="3"
-                    ></circle>
-
-                    <path d="M19 15a2 2 0 0 0 .4 2.2l.1.1-1.8 1.8-.1-.1A2 2 0 0 0 15.4 19a2 2 0 0 0-1.4 1.9v.1h-4v-.1A2 2 0 0 0 8.6 19a2 2 0 0 0-2.2.4l-.1.1-1.8-1.8.1-.1A2 2 0 0 0 5 15.4 2 2 0 0 0 3.1 14H3v-4h.1A2 2 0 0 0 5 8.6 2 2 0 0 0 4.6 6.4l-.1-.1 1.8-1.8.1.1A2 2 0 0 0 8.6 5 2 2 0 0 0 10 3.1V3h4v.1A2 2 0 0 0 15.4 5a2 2 0 0 0 2.2-.4l.1-.1 1.8 1.8-.1.1a2 2 0 0 0-.4 2.2A2 2 0 0 0 20.9 10h.1v4h-.1A2 2 0 0 0 19 15z"></path>
-
-                </svg>
-
-                Procedures
-
-            </a>
-
-
-            <!-- ANNOUNCEMENTS -->
-
-            <a href="announcements.php">
-
-                <svg class="nav-icon" viewBox="0 0 24 24">
-
-                    <path d="M3 11v2"></path>
-
-                    <path d="M6 9l11-4v14L6 15z"></path>
-
-                    <path d="M6 9v6"></path>
-
-                    <path d="M17 9c2 0 4 1.5 4 3s-2 3-4 3"></path>
-
-                </svg>
-
-                Announcements
-
-            </a>
-
-
-        </div>
-
-
-        <!-- LOGIN / REGISTER -->
-
-        <div class="account-links">
-
-
-            <a
-                href="login.php"
-                class="login-btn"
-            >
-
-                <svg class="nav-icon" viewBox="0 0 24 24">
-
-                    <path d="M10 17l5-5-5-5"></path>
-
-                    <path d="M15 12H3"></path>
-
-                    <path d="M21 3v18"></path>
-
-                </svg>
-
-                Login
-
-            </a>
-
-
-            <a
-                href="register.php"
-                class="register-btn"
-            >
-
-                <svg class="nav-icon" viewBox="0 0 24 24">
-
-                    <circle
-                        cx="9"
-                        cy="8"
-                        r="3"
-                    ></circle>
-
-                    <path d="M3 20c0-3 2.5-5 6-5s6 2 6 5"></path>
-
-                    <path d="M18 8v6"></path>
-
-                    <path d="M15 11h6"></path>
-
-                </svg>
-
-                Register
-
-            </a>
-
-        </div>
 
     </div>
+
+
+    <!-- =========================================================
+         LOGGED-IN ACCOUNT
+    ========================================================== -->
+
+    <div class="nav-account">
+
+
+        <div class="account-info">
+
+
+            <div class="account-name">
+
+                Hi,
+                <?= $display_name ?>
+
+            </div>
+
+
+            <?php if ($applicant_id !== ""): ?>
+
+                <div class="account-id">
+
+                    <?= $display_applicant_id ?>
+
+                </div>
+
+            <?php endif; ?>
+
+
+        </div>
+
+
+        <form
+            method="POST"
+            action="index.php"
+        >
+
+            <input
+                type="hidden"
+                name="logout"
+                value="1"
+            >
+
+
+            <button
+                type="submit"
+                class="logout-button"
+            >
+
+                ⇥ &nbsp; Logout
+
+            </button>
+
+        </form>
+
+
+    </div>
+
 
 </nav>
 
 
 
-<!-- =====================================================
-     HERO SECTION
-===================================================== -->
+<!-- ============================================================
+     HERO
+============================================================= -->
 
 <section class="hero">
 
 
-    <!-- CAMPUS IMAGE -->
-
-    <div class="hero-image"></div>
-
-
-    <!-- LEFT LIGHT AREA -->
-
-    <div class="hero-left"></div>
-
-
-    <!-- GREEN DIAGONALS -->
-
-    <div class="shape-two"></div>
-
-    <div class="shape-one"></div>
-
-    <div class="shape-three"></div>
-
-
-    <!-- HERO CONTENT -->
-
     <div class="hero-content">
 
-        <div class="hero-content-inner">
 
+        <div class="campus-badge">
 
-            <h1 class="hero-title">
+            <span></span>
 
-                Enrollment Guide and<br>
-
-                Decision Support System
-
-            </h1>
-
-
-            <p class="hero-description">
-
-                Your gateway to a simpler, smarter, and more
-                convenient enrollment process at Isabela State University
-                Cauayan Campus.
-
-            </p>
-
-
-            <a
-                href="enrollment-guide.php"
-                class="get-started"
-            >
-
-                <svg
-                    class="start-icon"
-                    viewBox="0 0 24 24"
-                >
-
-                    <path d="M10 17l5-5-5-5"></path>
-
-                    <path d="M15 12H3"></path>
-
-                    <path d="M21 3v18"></path>
-
-                </svg>
-
-                Get Started
-
-            </a>
+            ISU CAUAYAN CAMPUS
 
         </div>
 
+
+        <h1>
+
+            Enrollment made
+
+            <span>
+                simpler.
+            </span>
+
+        </h1>
+
+
+        <p class="hero-description">
+
+            Your gateway to a simpler, smarter, and more
+            convenient enrollment experience at Isabela State
+            University – Cauayan Campus.
+
+        </p>
+
+
+        <div class="hero-actions">
+
+
+            <a
+                href="enrollment.php"
+                class="primary-button"
+            >
+
+                Get Started
+                &nbsp; →
+
+            </a>
+
+
+            <a
+                href="requirements.php"
+                class="secondary-button"
+            >
+
+                View Requirements
+
+            </a>
+
+
+        </div>
+
+
     </div>
+
 
 </section>
 
 
 
-<!-- =====================================================
-     SERVICE CARDS
-===================================================== -->
+<!-- ============================================================
+     QUICK INFORMATION
+============================================================= -->
 
-<section class="services">
+<section class="quick-section">
 
-    <div class="cards">
+
+    <div class="quick-grid">
 
 
         <!-- ENROLLMENT GUIDE -->
 
-        <div class="card">
+        <div class="info-card">
 
-            <div class="card-icon">
 
-                <svg viewBox="0 0 24 24">
-
-                    <path d="M6 3h9l4 4v14H6z"></path>
-
-                    <path d="M14 3v5h5"></path>
-
-                    <path d="M9 12h6"></path>
-
-                    <path d="M9 16h6"></path>
-
-                    <path d="M9 8h2"></path>
-
-                </svg>
-
+            <div class="info-icon">
+                ▣
             </div>
+
 
             <h3>
                 Enrollment Guide
             </h3>
 
+
             <p>
-                Learn the step-by-step process
-                of how to enroll at ISU.
+
+                Follow the step-by-step enrollment
+                process and understand what you need
+                to do before, during, and after
+                enrollment.
+
             </p>
 
-            <div class="card-arrow">
-                →
-            </div>
+
+            <a
+                href="enrollment.php"
+                class="info-link"
+            >
+
+                View Guide →
+
+            </a>
+
 
         </div>
 
@@ -1287,36 +2219,37 @@ body {
 
         <!-- REQUIREMENTS -->
 
-        <div class="card">
+        <div class="info-card">
 
-            <div class="card-icon">
 
-                <svg viewBox="0 0 24 24">
-
-                    <path d="M6 3h9l4 4v14H6z"></path>
-
-                    <path d="M14 3v5h5"></path>
-
-                    <path d="M9 12h6"></path>
-
-                    <path d="M9 16h6"></path>
-
-                </svg>
-
+            <div class="info-icon">
+                ▤
             </div>
+
 
             <h3>
                 Requirements
             </h3>
 
+
             <p>
-                View the complete list of
-                requirements for enrollment.
+
+                View the documents and requirements
+                needed for your enrollment at Isabela
+                State University.
+
             </p>
 
-            <div class="card-arrow">
-                →
-            </div>
+
+            <a
+                href="requirements.php"
+                class="info-link"
+            >
+
+                View Requirements →
+
+            </a>
+
 
         </div>
 
@@ -1324,36 +2257,37 @@ body {
 
         <!-- PROCEDURES -->
 
-        <div class="card">
+        <div class="info-card">
 
-            <div class="card-icon">
 
-                <svg viewBox="0 0 24 24">
-
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="3"
-                    ></circle>
-
-                    <path d="M19 15a2 2 0 0 0 .4 2.2l.1.1-1.8 1.8-.1-.1A2 2 0 0 0 15.4 19a2 2 0 0 0-1.4 1.9v.1h-4v-.1A2 2 0 0 0 8.6 19a2 2 0 0 0-2.2.4l-.1.1-1.8-1.8-.1-.1A2 2 0 0 0 5 15.4 2 2 0 0 0 3.1 14H3v-4h.1A2 2 0 0 0 5 8.6 2 2 0 0 0 4.6 6.4l-.1-.1 1.8-1.8.1.1A2 2 0 0 0 8.6 5 2 2 0 0 0 10 3.1V3h4v.1A2 2 0 0 0 15.4 5a2 2 0 0 0 2.2-.4l.1-.1 1.8 1.8-.1.1a2 2 0 0 0-.4 2.2A2 2 0 0 0 20.9 10h.1v4h-.1A2 2 0 0 0 19 15z"></path>
-
-                </svg>
-
+            <div class="info-icon">
+                ⚙
             </div>
+
 
             <h3>
                 Procedures
             </h3>
 
+
             <p>
-                Check the enrollment procedures
-                and important reminders.
+
+                Learn the enrollment procedures,
+                important steps, and reminders to
+                help you prepare.
+
             </p>
 
-            <div class="card-arrow">
-                →
-            </div>
+
+            <a
+                href="procedures.php"
+                class="info-link"
+            >
+
+                View Procedures →
+
+            </a>
+
 
         </div>
 
@@ -1361,44 +2295,180 @@ body {
 
         <!-- ANNOUNCEMENTS -->
 
-        <div class="card">
+        <div class="info-card">
 
-            <div class="card-icon">
 
-                <svg viewBox="0 0 24 24">
-
-                    <path d="M3 11v2"></path>
-
-                    <path d="M6 9l11-4v14L6 15z"></path>
-
-                    <path d="M6 9v6"></path>
-
-                    <path d="M17 9c2 0 4 1.5 4 3s-2 3-4 3"></path>
-
-                </svg>
-
+            <div class="info-icon">
+                ◇
             </div>
+
 
             <h3>
                 Announcements
             </h3>
 
+
             <p>
-                Stay updated with the latest
-                news and updates from the university.
+
+                Stay informed about the latest
+                announcements, updates, schedules,
+                and university reminders.
+
             </p>
 
-            <div class="card-arrow">
-                →
-            </div>
+
+            <a
+                href="announcements.php"
+                class="info-link"
+            >
+
+                View Announcements →
+
+            </a>
+
 
         </div>
 
 
     </div>
 
+
 </section>
 
 
+
+<!-- ============================================================
+     CTA
+============================================================= -->
+
+<section class="cta">
+
+
+    <div class="cta-inner">
+
+
+        <div>
+
+
+            <h2>
+
+                Ready to begin your enrollment journey?
+
+            </h2>
+
+
+            <p>
+
+                Continue to SmartEnroll to view your
+                enrollment guide, requirements, and
+                procedures.
+
+            </p>
+
+
+        </div>
+
+
+        <div class="cta-actions">
+
+
+            <a
+                href="enrollment.php"
+                class="cta-button cta-primary"
+            >
+
+                Continue to Enrollment
+
+            </a>
+
+
+            <form
+                method="POST"
+                action="index.php"
+            >
+
+                <input
+                    type="hidden"
+                    name="logout"
+                    value="1"
+                >
+
+
+                <button
+                    type="submit"
+                    class="cta-button cta-logout"
+                >
+
+                    Logout
+
+                </button>
+
+            </form>
+
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- ============================================================
+     FOOTER
+============================================================= -->
+
+<footer class="footer">
+
+
+    <div class="footer-inner">
+
+
+        <div class="footer-brand">
+
+
+            <img
+                src="assets/isu-logo.png"
+                alt="ISU"
+            >
+
+
+            <div>
+
+
+                <strong>
+                    ISU SmartEnroll
+                </strong>
+
+
+                <span>
+                    Isabela State University – Cauayan Campus
+                </span>
+
+
+            </div>
+
+
+        </div>
+
+
+        <div class="footer-copy">
+
+            © <?= date("Y") ?>
+            ISU SmartEnroll.
+            All rights reserved.
+
+        </div>
+
+
+    </div>
+
+
+</footer>
+
+
 </body>
+
 </html>

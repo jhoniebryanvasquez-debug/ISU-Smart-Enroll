@@ -1,14 +1,33 @@
-/admin_dashboard.php
-/admin_login.php
+# ==========================================
+# ISU SmartEnroll - Git Ignore
+# ==========================================
+
+# Local database/configuration
 /db.php
-/edit_student.php
-/edit_user.php
-/enrollment.php
+
+# Backup files and folders
+/backups/
+
+# Temporary admin account creation tool
+/create_admin.php
+
+# Old/temporary backup copies
+/backup_restore_old.php
+
+# Temporary test files
 /php-test.php
-/programs.php
-/requirements.php
-/result.php
-/student.php
-/students(1).php
 /test.html
-/users.php
+
+# Local IDE settings
+/.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# PHP error/log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
